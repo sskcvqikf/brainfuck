@@ -132,34 +132,27 @@ private:
 
 struct bl : op // begin loop
 {
-    using base = op;
-
-    bl(std::shared_ptr<int> dp, byte_t *data_ptr)
-        : base(dp, data_ptr), tree_(dp, data_ptr), last_(&tree_) {}
-
-    op* add_next(std::unique_ptr<op> nop) override
-    {
-        last_ = last_->add_next(std::move(nop));
-        return last_;
-    }
-
+    using op::op;
 
     void execute() override
     {
         if (*(data_ptr_ + *dp_) == 0)
         {
             if (nop_ != nullptr)
-                nop_->execute();
+                after_el_->execute();
         }
         else
-            tree_.execute();
+            nop_->execute();
+    }
+
+    op*& get_after_el()
+    {
+        return after_el_;
     }
 
 private:
     void execute_impl() override {}
-    bool is_completed_{false};
-    brainfuck_tree tree_;
-    op* last_;
+    op* after_el_;
 };
 
 } // namespace detail
@@ -170,7 +163,7 @@ struct brainfuck
     brainfuck(const char* bf)
         : tree_(std::make_shared<int>(0), data_), last_(&tree_)
     {
-        std::stack<detail::op*> stack_;
+        std::stack<detail::bl*> stack_;
         for(const char* i = bf; *i != '\0'; ++i)
         {
             char di = *i;
@@ -199,13 +192,17 @@ struct brainfuck
                 case '[':
                     last_ = last_->add_next(std::make_unique<detail::bl>(last_->get_dp(),
                         last_->get_data_ptr()));
-                    stack_.push(last_);
+                    stack_.push(dynamic_cast<detail::bl*>(last_));
                     break;
                 case ']':
+                    {
+                    auto bl = stack_.top();
                     last_ = last_->add_next(std::make_unique<detail::el>(last_->get_dp(),
-                        last_->get_data_ptr(), stack_.top()));
+                        last_->get_data_ptr(), bl));
+                    bl->get_after_el() = last_;
                     stack_.pop();
                     break;
+                    }
                 case '\n':
                     break;
                 case '\t':
