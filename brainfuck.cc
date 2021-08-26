@@ -109,11 +109,8 @@ private:
 
 struct el : op // end loop
 {
-    using base = op;
+    using op::op;
     
-    el(std::shared_ptr<int> dp, byte_t *data_ptr, op *bl_ptr)
-        : base(dp, data_ptr), bl_ptr_(bl_ptr) {}
-
     void execute() override
     {
         if (*(data_ptr_ + *dp_) == 0)
@@ -125,6 +122,7 @@ struct el : op // end loop
             bl_ptr_->execute();
     }
 
+    op*& get_bl_ptr() { return bl_ptr_; }
 private:
     void execute_impl() override {}
     op* bl_ptr_ = nullptr;
@@ -132,27 +130,25 @@ private:
 
 struct bl : op // begin loop
 {
-    using op::op;
+    using base = op;
+    
+    bl(std::shared_ptr<int> dp, byte_t *data_ptr, op *el_ptr)
+        : base(dp, data_ptr), el_ptr_(el_ptr) {}
 
     void execute() override
     {
         if (*(data_ptr_ + *dp_) == 0)
         {
             if (nop_ != nullptr)
-                after_el_->execute();
+                el_ptr_->execute();
         }
         else
             nop_->execute();
     }
 
-    op*& get_after_el()
-    {
-        return after_el_;
-    }
-
 private:
     void execute_impl() override {}
-    op* after_el_;
+    op* el_ptr_;
 };
 
 } // namespace detail
@@ -163,46 +159,49 @@ struct brainfuck
     brainfuck(const char* bf)
         : tree_(std::make_shared<int>(0), data_), last_(&tree_)
     {
-        std::stack<detail::bl*> stack_;
+        std::stack<std::unique_ptr<detail::el>> stack_el;
         for(const char* i = bf; *i != '\0'; ++i)
         {
             char di = *i;
             switch (di)
             {
                 case '>':
-                    last_ = last_->add_next(std::make_unique<detail::idp>(last_->get_dp(),
-                        last_->get_data_ptr()));
+                    last_ = last_->add_next(std::make_unique<detail::idp>(tree_.get_dp(),
+                        tree_.get_data_ptr()));
                     break;
                 case '<':
-                    last_ = last_->add_next(std::make_unique<detail::ddp>(last_->get_dp(),
-                        last_->get_data_ptr()));
+                    last_ = last_->add_next(std::make_unique<detail::ddp>(tree_.get_dp(),
+                        tree_.get_data_ptr()));
                     break;
                 case '+':
-                    last_ = last_->add_next(std::make_unique<detail::id>(last_->get_dp(),
-                        last_->get_data_ptr()));
+                    last_ = last_->add_next(std::make_unique<detail::id>(tree_.get_dp(),
+                        tree_.get_data_ptr()));
                     break;
                 case '-':
-                    last_ = last_->add_next(std::make_unique<detail::dd>(last_->get_dp(),
-                        last_->get_data_ptr()));
+                    last_ = last_->add_next(std::make_unique<detail::dd>(tree_.get_dp(),
+                        tree_.get_data_ptr()));
                     break;
                 case '.':
-                    last_ = last_->add_next(std::make_unique<detail::od>(last_->get_dp(),
-                        last_->get_data_ptr()));
+                    last_ = last_->add_next(std::make_unique<detail::od>(tree_.get_dp(),
+                        tree_.get_data_ptr()));
                     break;
                 case '[':
+                {
+                    auto el_ptr = std::make_unique<detail::el>(tree_.get_dp(), tree_.get_data_ptr());
                     last_ = last_->add_next(std::make_unique<detail::bl>(last_->get_dp(),
-                        last_->get_data_ptr()));
-                    stack_.push(dynamic_cast<detail::bl*>(last_));
+                        last_->get_data_ptr(), el_ptr.get()));
+                    el_ptr->get_bl_ptr() = last_;
+                    stack_el.push(std::move(el_ptr));
                     break;
+                }
                 case ']':
-                    {
-                    auto bl = stack_.top();
-                    last_ = last_->add_next(std::make_unique<detail::el>(last_->get_dp(),
-                        last_->get_data_ptr(), bl));
-                    bl->get_after_el() = last_;
-                    stack_.pop();
+                {
+                    if (stack_el.empty())
+                        throw std::invalid_argument("Bad brainfuck string");
+                    last_ = last_->add_next(std::move(stack_el.top()));
+                    stack_el.pop();
                     break;
-                    }
+                }
                 case '\n':
                     break;
                 case '\t':
@@ -213,6 +212,8 @@ struct brainfuck
                     throw std::invalid_argument("Unknown symbol appeared");
             }
         }
+        if (!stack_el.empty())
+            throw std::invalid_argument("Bad brainfuck string");
     }
 
     void execute()
