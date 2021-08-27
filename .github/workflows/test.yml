@@ -15,5 +15,6 @@ jobs:
         run: make
 
       - name: Run tests
-        run: cd tests
-        run: ./tests.sh
+        run: |
+          cd tests
+          ./tests.sh
