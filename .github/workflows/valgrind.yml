@@ -13,27 +13,29 @@ jobs:
       
       - name: Run make
         run: make
+      - name: Install valgrind
+        run: sudo apt-get install valgrind
 
       - name: Run valgrind 1
-        run: valgrind ./brainfuck "$(cat b2c.b)"
+        run: valgrind ./brainfuck "$(cat tests/b2c.b)"
 
       - name: Run valgrind 2
-        run: valgrind ./brainfuck "$(cat beer.b)"
+        run: valgrind ./brainfuck "$(cat tests/beer.b)"
 
       - name: Run valgrind 3
-        run: valgrind ./brainfuck "$(cat dquine.b)"
+        run: valgrind ./brainfuck "$(cat tests/dquine.b)"
 
       - name: Run valgrind 4
-        run: valgrind ./brainfuck "$(cat hellow1.b)"
+        run: valgrind ./brainfuck "$(cat tests/hellow1.b)"
 
       - name: Run valgrind 5
-        run: valgrind ./brainfuck "$(cat hellow2.b)"
+        run: valgrind ./brainfuck "$(cat tests/hellow2.b)"
 
       - name: Run valgrind 6
-        run: valgrind ./brainfuck "$(cat pi.b)"
+        run: valgrind ./brainfuck "$(cat tests/pi.b)"
 
       - name: Run valgrind 7
-        run: valgrind ./brainfuck "$(cat quine505.b)"
+        run: valgrind ./brainfuck "$(cat tests/quine505.b)"
 
       - name: Run valgrind 8
-        run: valgrind ./brainfuck "$(cat squares.b)"
+        run: valgrind ./brainfuck "$(cat tests/squares.b)"
