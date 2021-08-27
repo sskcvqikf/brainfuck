@@ -28,6 +28,7 @@ struct op
     op* get_nop_() { return nop_.get(); }
     std::shared_ptr<int> get_dp() { return dp_; }
     
+    virtual ~op() {}
 
 protected:
     std::unique_ptr<op> nop_; // next instruction
