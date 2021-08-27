@@ -122,7 +122,7 @@ struct el : op // end loop
             bl_ptr_->execute();
     }
 
-    op*& get_bl_ptr() { return bl_ptr_; }
+    void set_bl_ptr(op* bl_ptr) { bl_ptr_ = bl_ptr; }
 private:
     void execute_impl() override {}
     op* bl_ptr_ = nullptr;
@@ -190,7 +190,7 @@ struct brainfuck
                     auto el_ptr = std::make_unique<detail::el>(tree_.get_dp(), tree_.get_data_ptr());
                     last_ = last_->add_next(std::make_unique<detail::bl>(last_->get_dp(),
                         last_->get_data_ptr(), el_ptr.get()));
-                    el_ptr->get_bl_ptr() = last_;
+                    el_ptr->set_bl_ptr(last_);
                     stack_el.push(std::move(el_ptr));
                     break;
                 }
