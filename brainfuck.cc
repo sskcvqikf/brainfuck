@@ -16,12 +16,7 @@ struct op
     op(std::shared_ptr<int> dp, byte_t *data_ptr)
         : dp_(std::move(dp)), data_ptr_(data_ptr) {}
 
-    virtual void execute()
-    {
-        execute_impl();
-        if (nop_.get() != nullptr)
-            nop_.get()->execute();
-    }
+    virtual void execute() = 0;
 
     virtual op* add_next(std::unique_ptr<op> nop)
     {
@@ -33,8 +28,6 @@ struct op
     op* get_nop_() { return nop_.get(); }
     std::shared_ptr<int> get_dp() { return dp_; }
     
-private:
-    virtual void execute_impl() = 0;
 
 protected:
     std::unique_ptr<op> nop_; // next instruction
@@ -42,17 +35,31 @@ protected:
     byte_t *data_ptr_;
 };
 
-struct brainfuck_tree : op
+struct op_simple : op
 {
     using op::op;
-    void prepare() {}
+    virtual void execute()
+    {
+        execute_impl();
+        if (nop_.get() != nullptr)
+            nop_.get()->execute();
+    }
 private:
-    void execute_impl(){}
+    virtual void execute_impl() = 0;
 };
 
-struct idp : op // increment data pointer
+
+struct brainfuck_tree : op_simple
 {
-    using op::op;
+    using op_simple::op_simple;
+    void prepare() {}
+private:
+    void execute_impl() override{}
+};
+
+struct idp : op_simple // increment data pointer
+{
+    using op_simple::op_simple;
 
 private:
     void execute_impl() override
@@ -62,9 +69,9 @@ private:
     }
 };
 
-struct ddp : op // decrement data pointer
+struct ddp : op_simple // decrement data pointer
 {
-    using op::op;
+    using op_simple::op_simple;
 
 private:
     void execute_impl() override
@@ -74,9 +81,9 @@ private:
     }
 };
 
-struct id : op // increment byte in current cell
+struct id : op_simple // increment byte in current cell
 {
-    using op::op;
+    using op_simple::op_simple;
 
 private:
     void execute_impl() override
@@ -85,9 +92,9 @@ private:
     }
 };
 
-struct dd : op // decrement byte in current cell
+struct dd : op_simple // decrement byte in current cell
 {
-    using op::op;
+    using op_simple::op_simple;
 
 private:
     void execute_impl() override
@@ -96,9 +103,9 @@ private:
     }
 };
 
-struct od : op // output byte in current cell
+struct od : op_simple // output byte in current cell
 {
-    using op::op;
+    using op_simple::op_simple;
 
 private:
     void execute_impl() override
@@ -124,7 +131,6 @@ struct el : op // end loop
 
     void set_bl_ptr(op* bl_ptr) { bl_ptr_ = bl_ptr; }
 private:
-    void execute_impl() override {}
     op* bl_ptr_ = nullptr;
 };
 
@@ -147,7 +153,6 @@ struct bl : op // begin loop
     }
 
 private:
-    void execute_impl() override {}
     op* el_ptr_;
 };
 
