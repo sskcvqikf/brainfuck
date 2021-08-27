@@ -1,0 +1,19 @@
+name:  Test
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v1
+      
+      - name: Run make
+        run: make
+
+      - name: Run tests
+        run: cd tests
+        run: ./tests.sh
