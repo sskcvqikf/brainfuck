@@ -50,7 +50,7 @@ private:
 };
 
 
-struct brainfuck_tree : op_simple
+struct brainfuck_tree final : op_simple 
 {
     using op_simple::op_simple;
     void prepare() {}
@@ -58,7 +58,7 @@ private:
     void execute_impl() override{}
 };
 
-struct idp : op_simple // increment data pointer
+struct idp final : op_simple // increment data pointer
 {
     using op_simple::op_simple;
 
@@ -70,7 +70,7 @@ private:
     }
 };
 
-struct ddp : op_simple // decrement data pointer
+struct ddp final : op_simple // decrement data pointer
 {
     using op_simple::op_simple;
 
@@ -82,7 +82,7 @@ private:
     }
 };
 
-struct id : op_simple // increment byte in current cell
+struct id final : op_simple // increment byte in current cell
 {
     using op_simple::op_simple;
 
@@ -93,7 +93,7 @@ private:
     }
 };
 
-struct dd : op_simple // decrement byte in current cell
+struct dd final : op_simple // decrement byte in current cell
 {
     using op_simple::op_simple;
 
@@ -104,7 +104,7 @@ private:
     }
 };
 
-struct od : op_simple // output byte in current cell
+struct od final : op_simple // output byte in current cell
 {
     using op_simple::op_simple;
 
@@ -115,7 +115,7 @@ private:
     }
 };
 
-struct el : op // end loop
+struct el final : op // end loop
 {
     using op::op;
     
@@ -135,7 +135,7 @@ private:
     op* bl_ptr_ = nullptr;
 };
 
-struct bl : op // begin loop
+struct bl final : op // begin loop
 {
     using base = op;
     
@@ -160,7 +160,7 @@ private:
 } // namespace detail
 
 
-struct brainfuck
+struct brainfuck final
 {
     brainfuck(const char* bf)
         : tree_(std::make_shared<int>(0), data_), last_(&tree_)
