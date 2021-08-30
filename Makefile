@@ -1,4 +1,4 @@
-CXX=g++-7
+CXX=g++
 CXXFLAGS=--std=c++17 -Wall -Wextra -Werror -O2
 
 all: brainfuck tests/test

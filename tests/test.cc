@@ -35,9 +35,16 @@ bool is_failed = false;
             << " - FAILED." << " No exception. "        \
             << __FILE__ << ":" << __LINE__ << '\n';     \
     } catch (exc&) {}                                   \
-      catch (...) { is_failed = true;                   \
+      catch (const std::exception& e) {                 \
+            is_failed = true;                           \
             std::cerr << "RUNNING: " << #expr           \
                 << " - FAILED." << " Other exception. " \
+                << __FILE__ <<":"<< __LINE__  << '\n'   \
+                << e.what() << '\n';}                   \
+      catch (...) {                                     \
+            is_failed = true;                           \
+            std::cerr << "RUNNING: " << #expr           \
+                << " - FAILED." << " Other thing. "     \
                 << __FILE__ <<":"<< __LINE__  << '\n';} \
 
 TEST(bad_brainfuck_string_test)
@@ -67,6 +74,7 @@ TEST(overflow_error_test)
     {
         overflow_right_1[i] = '>';
     }
+
     ASSERT_THROW((pd::brainfuck(overflow_right_1).execute()), std::overflow_error);
     char overflow_right_2[] = {"+[>+]"};
     ASSERT_THROW((pd::brainfuck(overflow_right_2).execute()), std::overflow_error);
