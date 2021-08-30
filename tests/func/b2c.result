@@ -1,5 +1,0 @@
-#include <unistd.h>
-char r[65536],*e=r;
-main(){
-exit(0);
-}
