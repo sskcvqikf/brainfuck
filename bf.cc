@@ -140,7 +140,7 @@ const char* bad_brainfuck_string::what() const noexcept
 brainfuck::brainfuck(const char* bf)
     : tree_(std::make_shared<int>(0), data_), last_(&tree_)
 {
-    detail::op_factory factory(std::move(tree_.get_dp()), tree_.get_data_ptr());
+    detail::op_factory factory(tree_.get_dp(), tree_.get_data_ptr());
 
     for(const char* i = bf; *i != '\0'; ++i)
     {
@@ -150,34 +150,40 @@ brainfuck::brainfuck(const char* bf)
             case '>':
                 last_ = last_->add_next(factory.get_idp());
                 break;
+
             case '<':
                 last_ = last_->add_next(factory.get_ddp());
                 break;
+
             case '+':
                 last_ = last_->add_next(factory.get_ib());
                 break;
+
             case '-':
                 last_ = last_->add_next(factory.get_db());
                 break;
+
             case '.':
                 last_ = last_->add_next(factory.get_ob());
                 break;
+
             case '[':
-            {
                 last_ = last_->add_next(factory.get_bl());
                 break;
-            }
+
             case ']':
-            {
                 last_ = last_->add_next(factory.get_el());
                 break;
-            }
+
             case '\n':
                 break;
+
             case '\t':
                 break;
+
             case ' ':
                 break;
+
             default:
                 throw bad_brainfuck_string("Unknown symbol appeared");
         }
