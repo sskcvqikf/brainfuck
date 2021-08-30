@@ -7,6 +7,20 @@
 using byte_t = char;
 static constexpr int size = 30000;
 
+struct bad_brainfuck_string : std::exception
+{
+    bad_brainfuck_string(const char *message)
+        : message_(message) {}
+
+    const char* what() const noexcept
+    {
+        return message_;
+    }
+
+private:
+    const char *message_;
+};
+
 namespace detail
 {
 struct brainfuck_tree;
@@ -42,20 +56,22 @@ struct op_simple : op
     virtual void execute()
     {
         execute_impl();
-        if (nop_.get() != nullptr)
-            nop_.get()->execute();
+        if (nop_)
+            nop_->execute();
     }
 private:
     virtual void execute_impl() = 0;
 };
 
 
-struct brainfuck_tree final : op_simple 
+struct brainfuck_tree final : op
 {
-    using op_simple::op_simple;
-    void prepare() {}
-private:
-    void execute_impl() override{}
+    using op::op;
+    void execute() override
+    {
+        if (nop_)
+            nop_->execute();
+    }
 };
 
 struct idp final : op_simple // increment data pointer
@@ -82,7 +98,7 @@ private:
     }
 };
 
-struct id final : op_simple // increment byte in current cell
+struct ib final : op_simple // increment byte in current cell
 {
     using op_simple::op_simple;
 
@@ -93,7 +109,7 @@ private:
     }
 };
 
-struct dd final : op_simple // decrement byte in current cell
+struct db final : op_simple // decrement byte in current cell
 {
     using op_simple::op_simple;
 
@@ -104,7 +120,7 @@ private:
     }
 };
 
-struct od final : op_simple // output byte in current cell
+struct ob final : op_simple // output byte in current cell
 {
     using op_simple::op_simple;
 
@@ -157,68 +173,89 @@ private:
     op* el_ptr_;
 };
 
-} // namespace detail
-
-struct bad_brainfuck_string : std::exception
+struct op_factory final
 {
-    bad_brainfuck_string(const char *message)
-        : message_(message) {}
+    op_factory(std::shared_ptr<int> dp, char *data)
+        : dp_(std::move(dp)), data_(data) {}
 
-    const char* what() const noexcept
+    std::unique_ptr<op> get_idp() { return std::make_unique<idp>(dp_, data_); }
+
+    std::unique_ptr<op> get_ddp() { return std::make_unique<ddp>(dp_, data_); }
+    
+    std::unique_ptr<op> get_ib() { return std::make_unique<ib>(dp_, data_); }
+
+    std::unique_ptr<op> get_db() { return std::make_unique<db>(dp_, data_); }
+
+    std::unique_ptr<op> get_ob() { return std::make_unique<ob>(dp_, data_); }
+
+    std::unique_ptr<op> get_bl()
+    { 
+        auto el_ptr = std::make_unique<detail::el>(dp_, data_);
+        auto rtn = std::make_unique<detail::bl>(dp_, data_, el_ptr.get());
+        el_ptr->set_bl_ptr(rtn.get());
+        stack_el.push(std::move(el_ptr));
+        return rtn;
+    }
+
+    std::unique_ptr<op> get_el()
     {
-        return message_;
+        if (stack_el.empty())
+            throw bad_brainfuck_string("Unmatched brackets appeared");
+        auto rtn(std::move(stack_el.top()));
+        stack_el.pop();
+
+        return rtn;
+    }
+
+    void post_process()
+    {
+        if (!stack_el.empty())
+            throw bad_brainfuck_string("Unmatched brackets appeared");
     }
 
 private:
-    const char *message_;
+    std::stack<std::unique_ptr<el>> stack_el;
+    std::shared_ptr<int> dp_;
+    char* data_;
 };
+
+} // namespace detail
 
 struct brainfuck final
 {
     brainfuck(const char* bf)
         : tree_(std::make_shared<int>(0), data_), last_(&tree_)
     {
-        std::stack<std::unique_ptr<detail::el>> stack_el;
+        detail::op_factory factory(std::move(tree_.get_dp()), tree_.get_data_ptr());
+
         for(const char* i = bf; *i != '\0'; ++i)
         {
             char di = *i;
             switch (di)
             {
                 case '>':
-                    last_ = last_->add_next(std::make_unique<detail::idp>(std::move(tree_.get_dp()),
-                        tree_.get_data_ptr()));
+                    last_ = last_->add_next(factory.get_idp());
                     break;
                 case '<':
-                    last_ = last_->add_next(std::make_unique<detail::ddp>(std::move(tree_.get_dp()),
-                        tree_.get_data_ptr()));
+                    last_ = last_->add_next(factory.get_ddp());
                     break;
                 case '+':
-                    last_ = last_->add_next(std::make_unique<detail::id>(std::move(tree_.get_dp()),
-                        tree_.get_data_ptr()));
+                    last_ = last_->add_next(factory.get_ib());
                     break;
                 case '-':
-                    last_ = last_->add_next(std::make_unique<detail::dd>(std::move(tree_.get_dp()),
-                        tree_.get_data_ptr()));
+                    last_ = last_->add_next(factory.get_db());
                     break;
                 case '.':
-                    last_ = last_->add_next(std::make_unique<detail::od>(std::move(tree_.get_dp()),
-                        tree_.get_data_ptr()));
+                    last_ = last_->add_next(factory.get_ob());
                     break;
                 case '[':
                 {
-                    auto el_ptr = std::make_unique<detail::el>(std::move(tree_.get_dp()), tree_.get_data_ptr());
-                    last_ = last_->add_next(std::make_unique<detail::bl>(last_->get_dp(),
-                        last_->get_data_ptr(), el_ptr.get()));
-                    el_ptr->set_bl_ptr(last_);
-                    stack_el.push(std::move(el_ptr));
+                    last_ = last_->add_next(factory.get_bl());
                     break;
                 }
                 case ']':
                 {
-                    if (stack_el.empty())
-                        throw bad_brainfuck_string("Unmatched brackets appeared");
-                    last_ = last_->add_next(std::move(stack_el.top()));
-                    stack_el.pop();
+                    last_ = last_->add_next(factory.get_el());
                     break;
                 }
                 case '\n':
@@ -231,8 +268,7 @@ struct brainfuck final
                     throw bad_brainfuck_string("Unknown symbol appeared");
             }
         }
-        if (!stack_el.empty())
-            throw bad_brainfuck_string("Unmatched brackets appeared");
+        factory.post_process();
     }
 
     void execute()
