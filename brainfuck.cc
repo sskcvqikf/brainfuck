@@ -7,6 +7,20 @@
 using byte_t = char;
 static constexpr int size = 30000;
 
+struct bad_brainfuck_string : std::exception
+{
+    bad_brainfuck_string(const char *message)
+        : message_(message) {}
+
+    const char* what() const noexcept
+    {
+        return message_;
+    }
+
+private:
+    const char *message_;
+};
+
 namespace detail
 {
 struct brainfuck_tree;
@@ -186,7 +200,7 @@ struct op_factory final
     std::unique_ptr<op> get_el()
     {
         if (stack_el.empty())
-            throw std::invalid_argument("Bad brainfuck string");
+            throw bad_brainfuck_string("Unmatched brackets appeared");
         auto rtn(std::move(stack_el.top()));
         stack_el.pop();
 
@@ -196,7 +210,7 @@ struct op_factory final
     void post_process()
     {
         if (!stack_el.empty())
-            throw std::invalid_argument("Bad brainfuck string");
+            throw bad_brainfuck_string("Unmatched brackets appeared");
     }
 
 private:
@@ -206,20 +220,6 @@ private:
 };
 
 } // namespace detail
-
-struct bad_brainfuck_string : std::exception
-{
-    bad_brainfuck_string(const char *message)
-        : message_(message) {}
-
-    const char* what() const noexcept
-    {
-        return message_;
-    }
-
-private:
-    const char *message_;
-};
 
 struct brainfuck final
 {
