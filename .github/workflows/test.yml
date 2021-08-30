@@ -2,7 +2,6 @@ name:  Test
 
 on:
   push:
-    branches: [ main ]
 
 jobs:
   build:
@@ -14,7 +13,11 @@ jobs:
       - name: Run make
         run: make
 
-      - name: Run tests
+      - name: Run unit tests
         run: |
           cd tests
+          ./test
+      - name: Run functional tests
+        run: |
+          cd tests/func
           ./test.sh

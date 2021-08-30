@@ -1,2 +1,5 @@
 brainfuck
-tests/*.result
+bf.o
+tests/func/*.result
+tests/test
+compile_commands.json
