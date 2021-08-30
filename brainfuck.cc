@@ -207,6 +207,19 @@ private:
 
 } // namespace detail
 
+struct bad_brainfuck_string : std::exception
+{
+    bad_brainfuck_string(const char *message)
+        : message_(message) {}
+
+    const char* what() const noexcept
+    {
+        return message_;
+    }
+
+private:
+    const char *message_;
+};
 
 struct brainfuck final
 {
@@ -252,7 +265,7 @@ struct brainfuck final
                 case ' ':
                     break;
                 default:
-                    throw std::invalid_argument("Unknown symbol appeared");
+                    throw bad_brainfuck_string("Unknown symbol appeared");
             }
         }
         factory.post_process();
