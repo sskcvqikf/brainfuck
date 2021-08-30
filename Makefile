@@ -1,4 +1,4 @@
-CXX=g++
+CXX=g++-7
 CXXFLAGS=--std=c++17 -Wall -Wextra -Werror -O2
 
 all: brainfuck tests/test
@@ -14,4 +14,6 @@ bf.o: bf.cc bf.hh
 
 .PHONY: clean
 clean:
+	rm bf.o
+	rm tests/test
 	rm brainfuck
