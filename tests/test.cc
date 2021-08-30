@@ -69,11 +69,12 @@ TEST(bad_brainfuck_string_test)
 TEST(overflow_error_test)
 {
     REQUIRE((std::is_same_v<pd::byte_t, char>));
-    char overflow_right_1[30002] = {'>'};
-    for(int i = 0; i < 30002; ++i)
+    char overflow_right_1[30002] = {0};
+    for(int i = 0; i < 30001; ++i)
     {
         overflow_right_1[i] = '>';
     }
+    overflow_right_1[30001] = '\0';
 
     ASSERT_THROW((pd::brainfuck(overflow_right_1).execute()), std::overflow_error);
     char overflow_right_2[] = {"+[>+]"};

@@ -19,5 +19,5 @@ jobs:
           ./test
       - name: Run functional tests
         run: |
-          cd func
+          cd tests/func
           ./test.sh
