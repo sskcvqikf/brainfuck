@@ -159,6 +159,19 @@ private:
 
 } // namespace detail
 
+struct bad_brainfuck_string : std::exception
+{
+    bad_brainfuck_string(const char *message)
+        : message_(message) {}
+
+    const char* what() const noexcept
+    {
+        return message_;
+    }
+
+private:
+    const char *message_;
+};
 
 struct brainfuck final
 {
@@ -172,28 +185,28 @@ struct brainfuck final
             switch (di)
             {
                 case '>':
-                    last_ = last_->add_next(std::make_unique<detail::idp>(tree_.get_dp(),
+                    last_ = last_->add_next(std::make_unique<detail::idp>(std::move(tree_.get_dp()),
                         tree_.get_data_ptr()));
                     break;
                 case '<':
-                    last_ = last_->add_next(std::make_unique<detail::ddp>(tree_.get_dp(),
+                    last_ = last_->add_next(std::make_unique<detail::ddp>(std::move(tree_.get_dp()),
                         tree_.get_data_ptr()));
                     break;
                 case '+':
-                    last_ = last_->add_next(std::make_unique<detail::id>(tree_.get_dp(),
+                    last_ = last_->add_next(std::make_unique<detail::id>(std::move(tree_.get_dp()),
                         tree_.get_data_ptr()));
                     break;
                 case '-':
-                    last_ = last_->add_next(std::make_unique<detail::dd>(tree_.get_dp(),
+                    last_ = last_->add_next(std::make_unique<detail::dd>(std::move(tree_.get_dp()),
                         tree_.get_data_ptr()));
                     break;
                 case '.':
-                    last_ = last_->add_next(std::make_unique<detail::od>(tree_.get_dp(),
+                    last_ = last_->add_next(std::make_unique<detail::od>(std::move(tree_.get_dp()),
                         tree_.get_data_ptr()));
                     break;
                 case '[':
                 {
-                    auto el_ptr = std::make_unique<detail::el>(tree_.get_dp(), tree_.get_data_ptr());
+                    auto el_ptr = std::make_unique<detail::el>(std::move(tree_.get_dp()), tree_.get_data_ptr());
                     last_ = last_->add_next(std::make_unique<detail::bl>(last_->get_dp(),
                         last_->get_data_ptr(), el_ptr.get()));
                     el_ptr->set_bl_ptr(last_);
@@ -203,7 +216,7 @@ struct brainfuck final
                 case ']':
                 {
                     if (stack_el.empty())
-                        throw std::invalid_argument("Bad brainfuck string");
+                        throw bad_brainfuck_string("Unmatched brackets appeared");
                     last_ = last_->add_next(std::move(stack_el.top()));
                     stack_el.pop();
                     break;
@@ -215,11 +228,11 @@ struct brainfuck final
                 case ' ':
                     break;
                 default:
-                    throw std::invalid_argument("Unknown symbol appeared");
+                    throw bad_brainfuck_string("Unknown symbol appeared");
             }
         }
         if (!stack_el.empty())
-            throw std::invalid_argument("Bad brainfuck string");
+            throw bad_brainfuck_string("Unmatched brackets appeared");
     }
 
     void execute()
