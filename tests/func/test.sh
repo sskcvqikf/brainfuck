@@ -16,7 +16,7 @@ for i in *.b; do
     output="$f.result"
     expected="$f.expected"
     echo "Running $input"
-    ../brainfuck "$(cat $input)" > $output
+    ../../brainfuck "$(cat $input)" > $output
     sed -i "s/\r//g" $expected
     sed -i "s/\r//g" $output
     is_eq $output $expected
