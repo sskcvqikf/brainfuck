@@ -21,6 +21,9 @@ std::shared_ptr<int> op::get_dp() { return dp_; }
 
 op::~op() {}
 
+op_simple::op_simple(std::shared_ptr<int> dp, byte_t *data_ptr, int n)
+    : base(dp, data_ptr), n_{n} {}
+
 void op_simple::execute()
 {
     execute_impl();
@@ -36,29 +39,33 @@ void brainfuck_tree::execute()
 
 void idp::execute_impl()
 {
-    if (++*dp_ >= (size - 1))
+    if (*dp_ + n_ >= (size - 1))
         throw std::overflow_error("Data pointer is more than array size");
+    *dp_ += n_;
 }
 
 void ddp::execute_impl()
 {
-    if(--*dp_ < 0)
-        throw std::overflow_error("Data pointer is less than 0");
+    if (*dp_ - n_ < 0)
+        throw std::overflow_error("Data pointer is more than array size");
+    *dp_ -= n_;
 }
 
 void ib::execute_impl()
 {
-    ++*(data_ptr_ + *dp_);
+    *(data_ptr_ + *dp_) += n_;
 }
 
 void db::execute_impl()
 {
-    --*(data_ptr_ + *dp_);
+    *(data_ptr_ + *dp_) -= n_;
 }
 
-void ob::execute_impl()
+void ob::execute()
 {
     std::cout << *(data_ptr_ + *dp_);
+    if (nop_)
+        nop_->execute();
 }
 
 void el::execute()
@@ -91,15 +98,15 @@ void bl::execute()
 op_factory::op_factory(std::shared_ptr<int> dp, char *data)
     : dp_(std::move(dp)), data_(data) {}
 
-std::unique_ptr<op> op_factory::get_idp() { return std::make_unique<idp>(dp_, data_); }
+std::unique_ptr<op> op_factory::get_idp(int n) const { return std::make_unique<idp>(dp_, data_, n); }
 
-std::unique_ptr<op> op_factory::get_ddp() { return std::make_unique<ddp>(dp_, data_); }
+std::unique_ptr<op> op_factory::get_ddp(int n) const { return std::make_unique<ddp>(dp_, data_, n); }
 
-std::unique_ptr<op> op_factory::get_ib() { return std::make_unique<ib>(dp_, data_); }
+std::unique_ptr<op> op_factory::get_ib(int n) const { return std::make_unique<ib>(dp_, data_, n); }
 
-std::unique_ptr<op> op_factory::get_db() { return std::make_unique<db>(dp_, data_); }
+std::unique_ptr<op> op_factory::get_db(int n) const { return std::make_unique<db>(dp_, data_, n); }
 
-std::unique_ptr<op> op_factory::get_ob() { return std::make_unique<ob>(dp_, data_); }
+std::unique_ptr<op> op_factory::get_ob() const { return std::make_unique<ob>(dp_, data_); }
 
 std::unique_ptr<op> op_factory::get_bl()
 { 
@@ -141,37 +148,43 @@ brainfuck::brainfuck(const char* bf)
     : tree_(std::make_shared<int>(0), data_), last_(&tree_)
 {
     detail::op_factory factory(tree_.get_dp(), tree_.get_data_ptr());
-
-    for(const char* i = bf; *i != '\0'; ++i)
+    char prev_op = 0;
+    int current_op_count = 1;
+    for(const char *i = bf; *i != '\0'; ++i)
     {
         char di = *i;
+        if (di == '>' || di == '<' || di == '+' || di == '-')
+        {
+            if (di == prev_op)
+                ++current_op_count;
+            else
+            {
+                add(factory, prev_op, current_op_count);
+                prev_op = di;
+                current_op_count = 1;
+            }
+            continue;
+        }
         switch (di)
         {
-            case '>':
-                last_ = last_->add_next(factory.get_idp());
-                break;
-
-            case '<':
-                last_ = last_->add_next(factory.get_ddp());
-                break;
-
-            case '+':
-                last_ = last_->add_next(factory.get_ib());
-                break;
-
-            case '-':
-                last_ = last_->add_next(factory.get_db());
-                break;
-
             case '.':
+                add(factory, prev_op, current_op_count);
+                prev_op = 0;
+                current_op_count = 1;
                 last_ = last_->add_next(factory.get_ob());
                 break;
 
             case '[':
+                add(factory, prev_op, current_op_count);
+                prev_op = 0;
+                current_op_count = 1;
                 last_ = last_->add_next(factory.get_bl());
                 break;
 
             case ']':
+                add(factory, prev_op, current_op_count);
+                prev_op = 0;
+                current_op_count = 1;
                 last_ = last_->add_next(factory.get_el());
                 break;
 
@@ -188,7 +201,33 @@ brainfuck::brainfuck(const char* bf)
                 throw bad_brainfuck_string("Unknown symbol appeared");
         }
     }
+    add(factory, prev_op, current_op_count);
     factory.post_process();
+}
+
+void brainfuck::add(const detail::op_factory &factory, char to_add, int n)
+{
+    switch (to_add)
+    {
+        case '>':
+            last_ = last_->add_next(factory.get_idp(n));
+            break;
+
+        case '<':
+            last_ = last_->add_next(factory.get_ddp(n));
+            break;
+
+        case '+':
+            last_ = last_->add_next(factory.get_ib(n));
+            break;
+
+        case '-':
+            last_ = last_->add_next(factory.get_db(n));
+            break;
+        
+        case 0:
+            break;
+    }
 }
 
 void brainfuck::execute()

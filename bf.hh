@@ -47,8 +47,13 @@ protected:
 
 struct op_simple : op
 {
-    using op::op;
+    using base = op;
+
+    op_simple(std::shared_ptr<int> dp, byte_t *data_ptr, int n);
+
     virtual void execute();
+protected:
+    int n_;
 private:
     virtual void execute_impl() = 0;
 };
@@ -92,12 +97,11 @@ private:
     void execute_impl() override;
 };
 
-struct ob final : op_simple // output byte in current cell
+struct ob final : op // output byte in current cell
 {
-    using op_simple::op_simple;
+    using op::op;
 
-private:
-    void execute_impl() override;
+    void execute() override;
 };
 
 struct el final : op // end loop
@@ -127,15 +131,15 @@ struct op_factory final
 {
     op_factory(std::shared_ptr<int> dp, char *data);
 
-    std::unique_ptr<op> get_idp();
+    std::unique_ptr<op> get_idp(int) const;
 
-    std::unique_ptr<op> get_ddp();
+    std::unique_ptr<op> get_ddp(int) const;
     
-    std::unique_ptr<op> get_ib();
+    std::unique_ptr<op> get_ib(int) const;
 
-    std::unique_ptr<op> get_db();
+    std::unique_ptr<op> get_db(int) const;
 
-    std::unique_ptr<op> get_ob();
+    std::unique_ptr<op> get_ob() const;
 
     std::unique_ptr<op> get_bl();
 
@@ -156,6 +160,8 @@ struct brainfuck final
     brainfuck(const char* bf);
 
     void execute();
+
+    void add(const detail::op_factory &factory, char, int);
 
 private:
     detail::brainfuck_tree tree_;
