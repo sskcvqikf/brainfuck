@@ -72,7 +72,7 @@ void el::execute()
 {
     if (*(data_ptr_ + *dp_) == 0)
     {
-        if (nop_ != nullptr)
+        if (nop_)
             nop_->execute();
     }
     else
@@ -88,8 +88,7 @@ void bl::execute()
 {
     if (*(data_ptr_ + *dp_) == 0)
     {
-        if (nop_ != nullptr)
-            el_ptr_->execute();
+        el_ptr_->execute();
     }
     else
         nop_->execute();
