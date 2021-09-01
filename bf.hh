@@ -33,9 +33,9 @@ struct op
 
     virtual op* add_next(std::unique_ptr<op> nop);
 
-    byte_t* get_data_ptr();
-    op* get_nop_();
-    std::shared_ptr<int> get_dp();
+    byte_t* get_data_ptr() const noexcept;
+    op* get_nop_() const noexcept;
+    std::shared_ptr<int> get_dp() const noexcept;
     
     virtual ~op();
 
@@ -145,7 +145,7 @@ struct op_factory final
 
     std::unique_ptr<op> get_el();
 
-    void post_process();
+    void post_process() const;
 
 private:
     std::stack<std::unique_ptr<el>> stack_el;

@@ -15,9 +15,9 @@ op* op::add_next(std::unique_ptr<op> nop)
     return  nop_.get();
 }
 
-byte_t* op::get_data_ptr() { return data_ptr_; }
-op* op::get_nop_() { return nop_.get(); }
-std::shared_ptr<int> op::get_dp() { return dp_; }
+byte_t* op::get_data_ptr() const noexcept { return data_ptr_; }
+op* op::get_nop_() const noexcept { return nop_.get(); }
+std::shared_ptr<int> op::get_dp() const noexcept { return dp_; }
 
 op::~op() {}
 
@@ -126,7 +126,7 @@ std::unique_ptr<op> op_factory::get_el()
     return rtn;
 }
 
-void op_factory::post_process()
+void op_factory::post_process() const
 {
     if (!stack_el.empty())
         throw bad_brainfuck_string("Unmatched brackets appeared");
