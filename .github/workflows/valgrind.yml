@@ -16,25 +16,25 @@ jobs:
         run: sudo apt-get install valgrind
 
       - name: Run valgrind 1
-        run: valgrind ./brainfuck "$(cat tests/func/b2c.b)"
+        run: valgrind ./bin/main "$(cat tests/func/b2c.b)"
 
       - name: Run valgrind 2
-        run: valgrind ./brainfuck "$(cat tests/func/beer.b)"
+        run: valgrind ./bin/main "$(cat tests/func/beer.b)"
 
       - name: Run valgrind 3
-        run: valgrind ./brainfuck "$(cat tests/func/dquine.b)"
+        run: valgrind ./bin/main "$(cat tests/func/dquine.b)"
 
       - name: Run valgrind 4
-        run: valgrind ./brainfuck "$(cat tests/func/hellow1.b)"
+        run: valgrind ./bin/main "$(cat tests/func/hellow1.b)"
 
       - name: Run valgrind 5
-        run: valgrind ./brainfuck "$(cat tests/func/hellow2.b)"
+        run: valgrind ./bin/main "$(cat tests/func/hellow2.b)"
 
       - name: Run valgrind 6
-        run: valgrind ./brainfuck "$(cat tests/func/pi.b)"
+        run: valgrind ./bin/main "$(cat tests/func/pi.b)"
 
       - name: Run valgrind 7
-        run: valgrind ./brainfuck "$(cat tests/func/quine505.b)"
+        run: valgrind ./bin/main "$(cat tests/func/quine505.b)"
 
       - name: Run valgrind 8
-        run: valgrind ./brainfuck "$(cat tests/func/squares.b)"
+        run: valgrind ./bin/main "$(cat tests/func/squares.b)"

@@ -1,29 +1,16 @@
-#ifndef BRAINFUCK_BF_HH_
-#define BRAINFUCK_BF_HH_ 
+#ifndef BRAINFUCK_OPERATIONS_HH_
+#define BRAINFUCK_OPERATIONS_HH_ 
 #pragma once
 
 #include <memory>
-#include <exception>
-#include <stack>
+
+#include "cfg.hh"
 
 namespace pd
 {
-using byte_t = char;
-static constexpr int size = 30000;
-
-struct bad_brainfuck_string : std::exception
-{
-    bad_brainfuck_string(const char *message);
-
-    const char* what() const noexcept;
-
-private:
-    const char *message_;
-};
 
 namespace detail
 {
-struct brainfuck_tree;
 
 struct operation
 {
@@ -151,55 +138,8 @@ private:
     operation* end_loop_ptr_;
 };
 
-struct operation_factory final
-{
-    operation_factory(std::shared_ptr<int> dataptr, char *data);
-
-    std::unique_ptr<operation>
-    get_icrement_dataptr(int) const;
-
-    std::unique_ptr<operation>
-    get_decrement_dataptr(int) const;
-    
-    std::unique_ptr<operation>
-    get_icrement_byte(int) const;
-
-    std::unique_ptr<operation>
-    get_decrement_byte(int) const;
-
-    std::unique_ptr<operation>
-    get_output_byte() const;
-
-    std::unique_ptr<operation>
-    get_begin_loop();
-
-    std::unique_ptr<operation>
-    get_end_loop();
-
-    void post_process() const;
-
-private:
-    std::stack<std::unique_ptr<end_loop>> stack_end_loop;
-    std::shared_ptr<int> dataptr_;
-    char* data_;
-};
-
 } // namespace detail
 
-struct brainfuck final
-{
-    brainfuck(const char* bf);
-
-    void
-    execute();
-
-    void
-    add(const detail::operation_factory &factory, char, int);
-
-private:
-    detail::brainfuck_tree tree_;
-    detail::operation *last_;
-    byte_t data_[size] = {0};
-};
 } // namespace pd
-#endif // BRAINFUCK_BF_HH_
+
+#endif // BRAINFUCK_OPERATIONS_HH_

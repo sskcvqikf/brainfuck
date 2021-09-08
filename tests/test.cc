@@ -1,7 +1,8 @@
-#include "../bf.hh"
 #include <iostream>
 #include <cmath>
 
+#include "brainfuck.hh"
+#include "exceptions.hh"
 
 void* print_testname(const char* name)
 {
