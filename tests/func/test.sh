@@ -1,6 +1,6 @@
 #!/bin/bash
 
-exe=../../main
+exe=../../bin/main
 flag=0
 function is_eq {
     if cmp -s "$1" "$2"; then
