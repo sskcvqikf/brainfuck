@@ -6,129 +6,163 @@ namespace pd
 {
 namespace detail
 {
-op::op(std::shared_ptr<int> dp, byte_t *data_ptr)
-    : dp_(std::move(dp)), data_ptr_(data_ptr) {}
+operation::operation(std::shared_ptr<int> dataptr, byte_t *data_ptr)
+    : dataptr_(std::move(dataptr)), data_ptr_(data_ptr) {}
 
-op* op::add_next(std::unique_ptr<op> nop)
+operation*
+operation::add_next(std::unique_ptr<operation> next_operation)
 {
-    nop_ = std::move(nop);
-    return  nop_.get();
+    next_operation_ = std::move(next_operation);
+    return  next_operation_.get();
 }
 
-byte_t* op::get_data_ptr() const noexcept { return data_ptr_; }
-op* op::get_nop_() const noexcept { return nop_.get(); }
-std::shared_ptr<int> op::get_dp() const noexcept { return dp_; }
+byte_t*
+operation::get_data_ptr() const noexcept { return data_ptr_; }
 
-op::~op() {}
+operation*
+operation::get_next_operation_() const noexcept
+{ return next_operation_.get(); }
 
-op_simple::op_simple(std::shared_ptr<int> dp, byte_t *data_ptr, int n)
-    : base(dp, data_ptr), n_{n} {}
+std::shared_ptr<int>
+operation::get_dataptr() const noexcept { return dataptr_; }
 
-void op_simple::execute()
+operation::~operation() {}
+
+simple_operation::simple_operation(std::shared_ptr<int> dataptr,
+        byte_t *data_ptr, int n)
+    : base(dataptr, data_ptr), n_{n} {}
+
+void
+simple_operation::execute()
 {
     execute_impl();
-    if (nop_)
-        nop_->execute();
+    if (next_operation_)
+        next_operation_->execute();
 }
 
-void brainfuck_tree::execute()
+void
+brainfuck_tree::execute()
 {
-    if (nop_)
-        nop_->execute();
+    if (next_operation_)
+        next_operation_->execute();
 }
 
-void idp::execute_impl()
+void
+icrement_dataptr::execute_impl()
 {
-    if (*dp_ + n_ >= (size - 1))
-        throw std::overflow_error("Data pointer is more than array size");
-    *dp_ += n_;
+    if (*dataptr_ + n_ >= (size - 1))
+        throw std::overflow_error(
+                "Data pointer is more than array size");
+    *dataptr_ += n_;
 }
 
-void ddp::execute_impl()
+void
+decrement_dataptr::execute_impl()
 {
-    if (*dp_ - n_ < 0)
-        throw std::overflow_error("Data pointer is more than array size");
-    *dp_ -= n_;
+    if (*dataptr_ - n_ < 0)
+        throw std::overflow_error(
+                "Data pointer is more than array size");
+    *dataptr_ -= n_;
 }
 
-void ib::execute_impl()
+void
+icrement_byte::execute_impl()
+{ *(data_ptr_ + *dataptr_) += n_; }
+
+void
+decrement_byte::execute_impl()
+{ *(data_ptr_ + *dataptr_) -= n_; }
+
+void
+output_byte::execute()
 {
-    *(data_ptr_ + *dp_) += n_;
+    std::cout << *(data_ptr_ + *dataptr_);
+    if (next_operation_)
+        next_operation_->execute();
 }
 
-void db::execute_impl()
+void
+end_loop::execute()
 {
-    *(data_ptr_ + *dp_) -= n_;
-}
-
-void ob::execute()
-{
-    std::cout << *(data_ptr_ + *dp_);
-    if (nop_)
-        nop_->execute();
-}
-
-void el::execute()
-{
-    if (*(data_ptr_ + *dp_) == 0)
+    if (*(data_ptr_ + *dataptr_) == 0)
     {
-        if (nop_)
-            nop_->execute();
+        if (next_operation_)
+            next_operation_->execute();
     }
     else
-        bl_ptr_->execute();
+        begin_loop_ptr_->execute();
 }
 
-void el::set_bl_ptr(op* bl_ptr) { bl_ptr_ = bl_ptr; }
+void
+end_loop::set_begin_loop_ptr(operation* begin_loop_ptr)
+{ begin_loop_ptr_ = begin_loop_ptr; }
 
-bl::bl(std::shared_ptr<int> dp, byte_t *data_ptr, op *el_ptr)
-    : base(dp, data_ptr), el_ptr_(el_ptr) {}
+begin_loop::begin_loop(std::shared_ptr<int> dataptr, byte_t *data_ptr,
+        operation *end_loop_ptr)
+    : base(dataptr, data_ptr), end_loop_ptr_(end_loop_ptr) {}
 
-void bl::execute()
+void
+begin_loop::execute()
 {
-    if (*(data_ptr_ + *dp_) == 0)
+    if (*(data_ptr_ + *dataptr_) == 0)
     {
-        el_ptr_->execute();
+        end_loop_ptr_->execute();
     }
     else
-        nop_->execute();
+        next_operation_->execute();
 }
 
-op_factory::op_factory(std::shared_ptr<int> dp, char *data)
-    : dp_(std::move(dp)), data_(data) {}
+operation_factory::operation_factory(std::shared_ptr<int> dataptr,
+        char *data)
+    : dataptr_(std::move(dataptr)), data_(data) {}
 
-std::unique_ptr<op> op_factory::get_idp(int n) const { return std::make_unique<idp>(dp_, data_, n); }
+std::unique_ptr<operation>
+operation_factory::get_icrement_dataptr(int n) const
+{ return std::make_unique<icrement_dataptr>(dataptr_, data_, n); }
 
-std::unique_ptr<op> op_factory::get_ddp(int n) const { return std::make_unique<ddp>(dp_, data_, n); }
+std::unique_ptr<operation>
+operation_factory::get_decrement_dataptr(int n) const
+{ return std::make_unique<decrement_dataptr>(dataptr_, data_, n); }
 
-std::unique_ptr<op> op_factory::get_ib(int n) const { return std::make_unique<ib>(dp_, data_, n); }
+std::unique_ptr<operation>
+operation_factory::get_icrement_byte(int n) const
+{ return std::make_unique<icrement_byte>(dataptr_, data_, n); }
 
-std::unique_ptr<op> op_factory::get_db(int n) const { return std::make_unique<db>(dp_, data_, n); }
+std::unique_ptr<operation>
+operation_factory::get_decrement_byte(int n) const
+{ return std::make_unique<decrement_byte>(dataptr_, data_, n); }
 
-std::unique_ptr<op> op_factory::get_ob() const { return std::make_unique<ob>(dp_, data_); }
+std::unique_ptr<operation>
+operation_factory::get_output_byte() const
+{ return std::make_unique<output_byte>(dataptr_, data_); }
 
-std::unique_ptr<op> op_factory::get_bl()
+std::unique_ptr<operation>
+operation_factory::get_begin_loop()
 { 
-    auto el_ptr = std::make_unique<detail::el>(dp_, data_);
-    auto rtn = std::make_unique<detail::bl>(dp_, data_, el_ptr.get());
-    el_ptr->set_bl_ptr(rtn.get());
-    stack_el.push(std::move(el_ptr));
+    auto end_loop_ptr = std::make_unique<detail::end_loop>(dataptr_,
+            data_);
+    auto rtn = std::make_unique<detail::begin_loop>(dataptr_, data_,
+            end_loop_ptr.get());
+    end_loop_ptr->set_begin_loop_ptr(rtn.get());
+    stack_end_loop.push(std::move(end_loop_ptr));
     return rtn;
 }
 
-std::unique_ptr<op> op_factory::get_el()
+std::unique_ptr<operation>
+operation_factory::get_end_loop()
 {
-    if (stack_el.empty())
+    if (stack_end_loop.empty())
         throw bad_brainfuck_string("Unmatched brackets appeared");
-    auto rtn(std::move(stack_el.top()));
-    stack_el.pop();
+    auto rtn(std::move(stack_end_loop.top()));
+    stack_end_loop.pop();
 
     return rtn;
 }
 
-void op_factory::post_process() const
+void
+operation_factory::post_process() const
 {
-    if (!stack_el.empty())
+    if (!stack_end_loop.empty())
         throw bad_brainfuck_string("Unmatched brackets appeared");
 }
 
@@ -138,7 +172,8 @@ void op_factory::post_process() const
 bad_brainfuck_string::bad_brainfuck_string(const char *message)
     : message_(message) {}
 
-const char* bad_brainfuck_string::what() const noexcept
+const char*
+bad_brainfuck_string::what() const noexcept
 {
     return message_;
 }
@@ -146,7 +181,8 @@ const char* bad_brainfuck_string::what() const noexcept
 brainfuck::brainfuck(const char* bf)
     : tree_(std::make_shared<int>(0), data_), last_(&tree_)
 {
-    detail::op_factory factory(tree_.get_dp(), tree_.get_data_ptr());
+    detail::operation_factory factory(tree_.get_dataptr(),
+            tree_.get_data_ptr());
     char prev_op = 0;
     int current_op_count = 1;
     for(const char *i = bf; *i != '\0'; ++i)
@@ -170,21 +206,21 @@ brainfuck::brainfuck(const char* bf)
                 add(factory, prev_op, current_op_count);
                 prev_op = 0;
                 current_op_count = 1;
-                last_ = last_->add_next(factory.get_ob());
+                last_ = last_->add_next(factory.get_output_byte());
                 break;
 
             case '[':
                 add(factory, prev_op, current_op_count);
                 prev_op = 0;
                 current_op_count = 1;
-                last_ = last_->add_next(factory.get_bl());
+                last_ = last_->add_next(factory.get_begin_loop());
                 break;
 
             case ']':
                 add(factory, prev_op, current_op_count);
                 prev_op = 0;
                 current_op_count = 1;
-                last_ = last_->add_next(factory.get_el());
+                last_ = last_->add_next(factory.get_end_loop());
                 break;
 
             case '\n':
@@ -204,24 +240,26 @@ brainfuck::brainfuck(const char* bf)
     factory.post_process();
 }
 
-void brainfuck::add(const detail::op_factory &factory, char to_add, int n)
+void
+brainfuck::add(const detail::operation_factory &factory, char to_add,
+        int n)
 {
     switch (to_add)
     {
         case '>':
-            last_ = last_->add_next(factory.get_idp(n));
+            last_ = last_->add_next(factory.get_icrement_dataptr(n));
             break;
 
         case '<':
-            last_ = last_->add_next(factory.get_ddp(n));
+            last_ = last_->add_next(factory.get_decrement_dataptr(n));
             break;
 
         case '+':
-            last_ = last_->add_next(factory.get_ib(n));
+            last_ = last_->add_next(factory.get_icrement_byte(n));
             break;
 
         case '-':
-            last_ = last_->add_next(factory.get_db(n));
+            last_ = last_->add_next(factory.get_decrement_byte(n));
             break;
         
         case 0:
@@ -229,7 +267,8 @@ void brainfuck::add(const detail::op_factory &factory, char to_add, int n)
     }
 }
 
-void brainfuck::execute()
+void
+brainfuck::execute()
 {
     tree_.execute();
 }
