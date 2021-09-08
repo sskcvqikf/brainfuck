@@ -4,11 +4,10 @@
 
 namespace pd
 {
+
     using byte_t = char;
     static constexpr int size = 3000;
-namespace detail
-{
 
-} // namespace detail
 } // namespace pd
+
 #endif // BRAINFUCK_CFG_HH_

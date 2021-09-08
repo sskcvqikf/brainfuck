@@ -11,6 +11,7 @@ namespace pd
 
 namespace detail
 {
+
 struct operation_factory final
 {
     operation_factory(std::shared_ptr<int> dataptr, char *data);
@@ -43,7 +44,9 @@ private:
     std::shared_ptr<int> dataptr_;
     char* data_;
 };
+
 } // namespace detail
+
 } // namespace pd
 
 #endif // BRAINFUCK_OPERATION_FACTORY_HH_

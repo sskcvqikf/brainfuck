@@ -3,6 +3,7 @@
 
 namespace pd
 {
+
 namespace detail
 {
 
@@ -61,4 +62,5 @@ operation_factory::post_process() const
 }
 
 } // namespace detail
+
 } // namespace pd

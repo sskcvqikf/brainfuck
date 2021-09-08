@@ -4,8 +4,10 @@
 
 namespace pd
 {
+
 namespace detail
 {
+
 operation::operation(std::shared_ptr<int> dataptr, byte_t *data_ptr)
     : dataptr_(std::move(dataptr)), data_ptr_(data_ptr) {}
 
@@ -113,4 +115,5 @@ begin_loop::execute()
 }
 
 } // namespace detail
+
 } // namespace pd
