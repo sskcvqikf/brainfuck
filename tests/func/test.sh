@@ -1,5 +1,6 @@
 #!/bin/bash
 
+exe=../../main
 flag=0
 function is_eq {
     if cmp -s "$1" "$2"; then
@@ -16,7 +17,7 @@ for i in *.b; do
     output="$f.result"
     expected="$f.expected"
     echo "Running $input"
-    ../../brainfuck "$(cat $input)" > $output
+    $exe "$(cat $input)" > $output
     sed -i "s/\r//g" $expected
     sed -i "s/\r//g" $output
     is_eq $output $expected

@@ -1,5 +1,4 @@
-brainfuck
-bf.o
 tests/func/*.result
-tests/test
+bin/
+build/
 compile_commands.json

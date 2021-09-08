@@ -1,5 +1,5 @@
 #include <iostream>
-#include "bf.hh"
+#include "brainfuck.hh"
 
 int main(int argc, char** argv)
 {
