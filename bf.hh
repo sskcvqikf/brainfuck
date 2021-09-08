@@ -29,19 +29,26 @@ struct operation
 {
     operation(std::shared_ptr<int> dataptr, byte_t *data_ptr);
 
-    virtual void execute() = 0;
+    virtual void
+    execute() = 0;
 
-    virtual operation* add_next(std::unique_ptr<operation> next_operation);
+    virtual operation*
+    add_next(std::unique_ptr<operation> next_operation);
 
-    byte_t* get_data_ptr() const noexcept;
-    operation* get_next_operation_() const noexcept;
-    std::shared_ptr<int> get_dataptr() const noexcept;
+    byte_t*
+    get_data_ptr() const noexcept;
+
+    operation*
+    get_next_operation_() const noexcept;
+
+    std::shared_ptr<int>
+    get_dataptr() const noexcept;
     
     virtual ~operation();
 
 protected:
-    std::unique_ptr<operation> next_operation_; // next instruction
-    std::shared_ptr<int> dataptr_; // data ptr
+    std::unique_ptr<operation> next_operation_; 
+    std::shared_ptr<int> dataptr_; 
     byte_t *data_ptr_;
 };
 
@@ -49,79 +56,96 @@ struct simple_operation : operation
 {
     using base = operation;
 
-    simple_operation(std::shared_ptr<int> dataptr, byte_t *data_ptr, int n);
+    simple_operation(std::shared_ptr<int> dataptr, byte_t *data_ptr,
+            int n);
 
-    virtual void execute();
+    virtual void
+    execute();
+
 protected:
     int n_;
+
 private:
-    virtual void execute_impl() = 0;
+    virtual void
+    execute_impl() = 0;
 };
 
 
 struct brainfuck_tree final : operation
 {
     using operation::operation;
-    void execute() override;
+
+    void
+    execute() override;
 };
 
-struct icrement_dataptr final : simple_operation // increment data pointer
+struct icrement_dataptr final : simple_operation 
 {
     using simple_operation::simple_operation;
 
 private:
-    void execute_impl() override;
+    void
+    execute_impl() override;
 };
 
-struct decrement_dataptr final : simple_operation // decrement data pointer
+struct decrement_dataptr final : simple_operation
 {
     using simple_operation::simple_operation;
 
 private:
-    void execute_impl() override;
+    void
+    execute_impl() override;
 };
 
-struct icrement_byte final : simple_operation // increment byte in current cend_loopl
+struct icrement_byte final : simple_operation 
 {
     using simple_operation::simple_operation;
 
 private:
-    void execute_impl() override;
+    void
+    execute_impl() override;
 };
 
-struct decrement_byte final : simple_operation // decrement byte in current cend_loopl
+struct decrement_byte final : simple_operation
 {
     using simple_operation::simple_operation;
 
 private:
-    void execute_impl() override;
+    void
+    execute_impl() override;
 };
 
-struct output_byte final : operation // output byte in current cend_loopl
+struct output_byte final : operation 
 {
     using operation::operation;
 
-    void execute() override;
+    void
+    execute() override;
 };
 
-struct end_loop final : operation // end loop
+struct end_loop final : operation 
 {
     using operation::operation;
     
-    void execute() override;
+    void
+    execute() override;
 
-    void set_begin_loop_ptr(operation* begin_loop_ptr);
+    void
+    set_begin_loop_ptr(operation* begin_loop_ptr);
+
 private:
     operation* begin_loop_ptr_ = nullptr;
 };
 
-struct begin_loop final : operation // begin loop
+struct begin_loop final : operation
 {
     using base = operation;
     
-    begin_loop(std::shared_ptr<int> dataptr, byte_t *data_ptr, operation *end_loop_ptr);
+    begin_loop(std::shared_ptr<int> dataptr, byte_t *data_ptr,
+            operation *end_loop_ptr);
 
-    void execute() override;
+    void
+    execute() override;
 
 private:
     operation* end_loop_ptr_;
@@ -131,19 +155,26 @@ struct operation_factory final
 {
     operation_factory(std::shared_ptr<int> dataptr, char *data);
 
-    std::unique_ptr<operation> get_icrement_dataptr(int) const;
+    std::unique_ptr<operation>
+    get_icrement_dataptr(int) const;
 
-    std::unique_ptr<operation> get_decrement_dataptr(int) const;
+    std::unique_ptr<operation>
+    get_decrement_dataptr(int) const;
     
-    std::unique_ptr<operation> get_icrement_byte(int) const;
+    std::unique_ptr<operation>
+    get_icrement_byte(int) const;
 
-    std::unique_ptr<operation> get_decrement_byte(int) const;
+    std::unique_ptr<operation>
+    get_decrement_byte(int) const;
 
-    std::unique_ptr<operation> get_output_byte() const;
+    std::unique_ptr<operation>
+    get_output_byte() const;
 
-    std::unique_ptr<operation> get_begin_loop();
+    std::unique_ptr<operation>
+    get_begin_loop();
 
-    std::unique_ptr<operation> get_end_loop();
+    std::unique_ptr<operation>
+    get_end_loop();
 
     void post_process() const;
 
@@ -159,9 +190,11 @@ struct brainfuck final
 {
     brainfuck(const char* bf);
 
-    void execute();
+    void
+    execute();
 
-    void add(const detail::operation_factory &factory, char, int);
+    void
+    add(const detail::operation_factory &factory, char, int);
 
 private:
     detail::brainfuck_tree tree_;
