@@ -9,6 +9,6 @@ int main(int argc, char** argv)
         exit(1);
     }
     pd::brainfuck bf(argv[1]);
-    bf.execute();
+    bf.execute(std::make_unique<pd::vector_buffer>());
     return 0;
 }

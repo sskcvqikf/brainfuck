@@ -4,7 +4,7 @@
 
 #include <memory>
 
-#include "cfg.hh"
+#include "buffer.hh"
 
 namespace pd
 {
@@ -14,65 +14,32 @@ namespace detail
 
 struct operation
 {
-    operation(std::shared_ptr<int> dataptr, byte_t *data_ptr);
+    void
+    execute(buffer*);
 
-    virtual void
-    execute() = 0;
-
-    virtual operation*
-    add_next(std::unique_ptr<operation> next_operation);
-
-    byte_t*
-    get_data_ptr() const noexcept;
-
-    operation*
-    get_next_operation_() const noexcept;
-
-    std::shared_ptr<int>
-    get_dataptr() const noexcept;
-    
     virtual ~operation();
-
-protected:
-    std::unique_ptr<operation> next_operation_; 
-    std::shared_ptr<int> dataptr_; 
-    byte_t *data_ptr_;
-};
-
-struct simple_operation : operation
-{
-    using base = operation;
-
-    simple_operation(std::shared_ptr<int> dataptr, byte_t *data_ptr,
-            int n);
-
-    virtual void
-    execute();
-
-protected:
-    int n_;
 
 private:
     virtual void
-    execute_impl() = 0;
+    execute_impl(buffer*) = 0;
 };
 
-
-struct brainfuck_tree final : operation
+// ----- SIMPLE OPERAIONS -----
+struct simple_operation : operation
 {
-    using operation::operation;
+    simple_operation(int n);
 
-    void
-    execute() override;
+protected:
+    int n_;
 };
 
-struct icrement_dataptr final : simple_operation 
+struct increment_dataptr final : simple_operation 
 {
     using simple_operation::simple_operation;
 
 private:
     void
-    execute_impl() override;
+    execute_impl(buffer*) override;
 };
 
 struct decrement_dataptr final : simple_operation
@@ -81,16 +48,16 @@ struct decrement_dataptr final : simple_operation
 
 private:
     void
-    execute_impl() override;
+    execute_impl(buffer*) override;
 };
 
-struct icrement_byte final : simple_operation 
+struct increment_byte final : simple_operation 
 {
     using simple_operation::simple_operation;
 
 private:
     void
-    execute_impl() override;
+    execute_impl(buffer*) override;
 };
 
 struct decrement_byte final : simple_operation
@@ -99,43 +66,56 @@ struct decrement_byte final : simple_operation
 
 private:
     void
-    execute_impl() override;
+    execute_impl(buffer*) override;
 };
 
 struct output_byte final : operation 
 {
-    using operation::operation;
-
+private:
     void
-    execute() override;
+    execute_impl(buffer*) override;
 };
 
-struct end_loop final : operation 
+// ----- OPERATIONS WITH STORAGE -----
+struct storage_operation : operation
 {
-    using operation::operation;
-    
     void
-    execute() override;
-
-    void
-    set_begin_loop_ptr(operation* begin_loop_ptr);
-
+    push_operation(operation* op);
 private:
-    operation* begin_loop_ptr_ = nullptr;
+    virtual void
+    push_operation_impl(operation* op) = 0;
 };
 
-struct begin_loop final : operation
+struct loop final : storage_operation
 {
-    using base = operation;
+    using storage_t = std::vector<detail::operation*>;
+
+    ~loop() override;
     
-    begin_loop(std::shared_ptr<int> dataptr, byte_t *data_ptr,
-            operation *end_loop_ptr);
+private:
+    void
+    execute_impl(buffer*) override;
 
     void
-    execute() override;
+    push_operation_impl(operation*) override;
+
+    storage_t operations;
+};
+
+struct prog final : storage_operation
+{
+    using storage_t = std::vector<detail::operation*>;
+
+    ~prog() override;
 
 private:
-    operation* end_loop_ptr_;
+    void
+    execute_impl(buffer*) override;
+
+    void
+    push_operation_impl(operation*) override;
+
+    storage_t operations;
 };
 
 } // namespace detail

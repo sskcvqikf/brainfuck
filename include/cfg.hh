@@ -6,7 +6,6 @@ namespace pd
 {
 
     using byte_t = char;
-    static constexpr int size = 3000;
 
 } // namespace pd
 

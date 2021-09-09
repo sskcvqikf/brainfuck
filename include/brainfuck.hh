@@ -2,8 +2,10 @@
 #define BRAINFUCK_BRAINFUCK_HH_ 
 #pragma once
 
+#include <stdexcept>
+
 #include "operations.hh"
-#include "operation_factory.hh"
+#include "buffer.hh"
 
 namespace pd
 {
@@ -13,15 +15,10 @@ struct brainfuck final
     brainfuck(const char* bf);
 
     void
-    execute();
-
-    void
-    add(const detail::operation_factory &factory, char, int);
+    execute(std::unique_ptr<buffer>);
 
 private:
-    detail::brainfuck_tree tree_;
-    detail::operation *last_;
-    byte_t data_[size] = {0};
+    detail::prog program;
 };
 
 } // namespace pd
