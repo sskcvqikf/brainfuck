@@ -10,30 +10,32 @@ namespace pd
 brainfuck::brainfuck(const char* bf)
 {
     using namespace detail;
+    using uniq_op = std::unique_ptr<operation>;
 
     std::stack<detail::storage_operation*> storages;
     storages.push(&program);
 
-    auto add_op = [&storages](operation *op)
+    auto add_op = [&storages](uniq_op op)
     {
-        storages.top()->push_operation(op);
+        storages.top()->push_operation(std::move(op));
     };
 
-    auto get_simple_op = [](char c, int n) -> simple_operation*
+    auto get_simple_op = [](char c, int n)
+        -> std::unique_ptr<simple_operation>
     {
         switch (c)
         {
             case '+':
-                return new increment_byte(n);
+                return std::make_unique<increment_byte>(n);
 
             case '-':
-                return new decrement_byte(n);
+                return std::make_unique<decrement_byte>(n);
 
             case '>':
-                return new increment_dataptr(n);
+                return std::make_unique<increment_dataptr>(n);
 
             case '<':
-                return new decrement_dataptr(n);
+                return std::make_unique<decrement_dataptr>(n);
             
             default:
                 throw std::runtime_error(
@@ -87,14 +89,15 @@ brainfuck::brainfuck(const char* bf)
         
         if (c == '[')
         {
-            loop *new_loop = new loop();
-            add_op(new_loop);
-            storages.push(new_loop);
+            auto new_loop = std::make_unique<loop>();
+            auto new_loop_ptr = new_loop.get();
+            add_op(std::move(new_loop));
+            storages.push(new_loop_ptr);
             continue;
         }
 
         if (c == '.')
-            add_op(new output_byte());
+            add_op(std::make_unique<output_byte>());
     }
     if (curr_op != 0)
         add_op(get_simple_op(curr_op, curr_op_count));

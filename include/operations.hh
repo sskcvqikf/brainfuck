@@ -2,6 +2,8 @@
 #define BRAINFUCK_OPERATIONS_HH_ 
 #pragma once
 
+#include <memory>
+
 #include "buffer.hh"
 
 namespace pd
@@ -77,42 +79,42 @@ private:
 // ----- OPERATIONS WITH STORAGE -----
 struct storage_operation : operation
 {
+    using uniq_op = std::unique_ptr<detail::operation>;
+
     void
-    push_operation(operation* op);
+    push_operation(uniq_op);
 
 private:
     virtual void
-    push_operation_impl(operation* op) = 0;
+    push_operation_impl(uniq_op) = 0;
 };
 
 struct loop final : storage_operation
 {
-    using storage_t = std::vector<detail::operation*>;
+    using storage_operation::uniq_op;
+    using storage_t = std::vector<uniq_op>;
 
-    ~loop() override;
-    
 private:
     void
     execute_impl(buffer*) const override;
 
     void
-    push_operation_impl(operation*) override;
+    push_operation_impl(uniq_op) override;
 
     storage_t operations;
 };
 
 struct prog final : storage_operation
 {
-    using storage_t = std::vector<detail::operation*>;
-
-    ~prog() override;
+    using storage_operation::uniq_op;
+    using storage_t = std::vector<uniq_op>;
 
 private:
     void
     execute_impl(buffer*) const override;
 
     void
-    push_operation_impl(operation*) override;
+    push_operation_impl(uniq_op) override;
 
     storage_t operations;
 };
