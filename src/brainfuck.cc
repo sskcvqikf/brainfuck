@@ -1,7 +1,7 @@
 #include "brainfuck.hh"
 #include "exceptions.hh"
 
-#include <iostream>
+#include <stdexcept>
 #include <stack>
 
 namespace pd
@@ -11,14 +11,12 @@ brainfuck::brainfuck(const char* bf)
 {
     using namespace detail;
 
-    std::stack<detail::loop*> loops;
+    std::stack<detail::storage_operation*> storages;
+    storages.push(&program);
 
-    auto add_op = [&loops, this](operation *op)
+    auto add_op = [&storages](operation *op)
     {
-        if (loops.empty())
-            program.push_operation(op);
-        else
-            loops.top()->push_operation(op);
+        storages.top()->push_operation(op);
     };
 
     auto get_simple_op = [](char c, int n) -> simple_operation*
@@ -80,10 +78,10 @@ brainfuck::brainfuck(const char* bf)
 
         if (c == ']')
         {
-            if (loops.empty())
+            if (storages.size() == 1)
                 throw bad_brainfuck_string(
                         "Unmatched brackets appeared");
-            loops.pop();
+            storages.pop();
             continue;
         }
         
@@ -91,7 +89,7 @@ brainfuck::brainfuck(const char* bf)
         {
             loop *new_loop = new loop();
             add_op(new_loop);
-            loops.push(new_loop);
+            storages.push(new_loop);
             continue;
         }
 
@@ -100,7 +98,8 @@ brainfuck::brainfuck(const char* bf)
     }
     if (curr_op != 0)
         add_op(get_simple_op(curr_op, curr_op_count));
-    if (!loops.empty())
+
+    if (storages.size() != 1)
         throw bad_brainfuck_string(
                 "Unmatched brackets appeared");
 }

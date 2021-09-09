@@ -11,7 +11,8 @@ struct bad_brainfuck_string : std::exception
 {
     bad_brainfuck_string(const char *message);
 
-    const char* what() const noexcept;
+    const char*
+    what() const noexcept;
 
 private:
     const char *message_;

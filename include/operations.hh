@@ -2,8 +2,6 @@
 #define BRAINFUCK_OPERATIONS_HH_ 
 #pragma once
 
-#include <memory>
-
 #include "buffer.hh"
 
 namespace pd
@@ -15,13 +13,13 @@ namespace detail
 struct operation
 {
     void
-    execute(buffer*);
+    execute(buffer*) const;
 
     virtual ~operation();
 
 private:
     virtual void
-    execute_impl(buffer*) = 0;
+    execute_impl(buffer*) const = 0;
 };
 
 // ----- SIMPLE OPERAIONS -----
@@ -39,7 +37,7 @@ struct increment_dataptr final : simple_operation
 
 private:
     void
-    execute_impl(buffer*) override;
+    execute_impl(buffer*) const override;
 };
 
 struct decrement_dataptr final : simple_operation
@@ -48,7 +46,7 @@ struct decrement_dataptr final : simple_operation
 
 private:
     void
-    execute_impl(buffer*) override;
+    execute_impl(buffer*) const override;
 };
 
 struct increment_byte final : simple_operation 
@@ -57,7 +55,7 @@ struct increment_byte final : simple_operation
 
 private:
     void
-    execute_impl(buffer*) override;
+    execute_impl(buffer*) const override;
 };
 
 struct decrement_byte final : simple_operation
@@ -66,14 +64,14 @@ struct decrement_byte final : simple_operation
 
 private:
     void
-    execute_impl(buffer*) override;
+    execute_impl(buffer*) const override;
 };
 
 struct output_byte final : operation 
 {
 private:
     void
-    execute_impl(buffer*) override;
+    execute_impl(buffer*) const override;
 };
 
 // ----- OPERATIONS WITH STORAGE -----
@@ -81,6 +79,7 @@ struct storage_operation : operation
 {
     void
     push_operation(operation* op);
+
 private:
     virtual void
     push_operation_impl(operation* op) = 0;
@@ -94,7 +93,7 @@ struct loop final : storage_operation
     
 private:
     void
-    execute_impl(buffer*) override;
+    execute_impl(buffer*) const override;
 
     void
     push_operation_impl(operation*) override;
@@ -110,7 +109,7 @@ struct prog final : storage_operation
 
 private:
     void
-    execute_impl(buffer*) override;
+    execute_impl(buffer*) const override;
 
     void
     push_operation_impl(operation*) override;

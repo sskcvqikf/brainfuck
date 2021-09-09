@@ -2,7 +2,7 @@
 #define BRAINFUCK_BRAINFUCK_HH_ 
 #pragma once
 
-#include <stdexcept>
+#include <memory>
 
 #include "operations.hh"
 #include "buffer.hh"

@@ -4,7 +4,6 @@
 
 namespace pd
 {
-
     using byte_t = char;
 
 } // namespace pd
