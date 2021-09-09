@@ -38,3 +38,6 @@ jobs:
 
       - name: Run valgrind 8
         run: valgrind ./bin/main "$(cat tests/func/squares.b)"
+          
+      - name: Run valgrind 9
+        run: valgrind ./bin/main "$(cat tests/func/pic.b)"
