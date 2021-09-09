@@ -26,6 +26,7 @@ struct buffer
     byte_t get_byte();
 
     virtual ~buffer();
+
 private:
     virtual void
     increment_dataptr_impl(int n) = 0;
@@ -67,6 +68,31 @@ private:
     add_n(int n);
 
     std::vector<byte_t> vec_;
+    int idx_;
+};
+
+
+struct char_buffer : buffer
+{
+    char_buffer();
+
+private:
+    void
+    increment_byte_impl(int n) override;
+
+    void
+    decrement_byte_impl(int n) override;
+
+    void
+    increment_dataptr_impl(int n) override;
+
+    void
+    decrement_dataptr_impl(int n) override;
+
+    byte_t
+    get_byte_impl() override;
+
+    byte_t ary_[30000] = {0};
     int idx_;
 };
 

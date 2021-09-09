@@ -69,4 +69,39 @@ void
 vector_buffer::add_n(int n)
 { while (n--) vec_.push_back(0); }
 
+char_buffer::char_buffer()
+    : idx_(0) {}
+
+void
+char_buffer::increment_byte_impl(int n)
+{ ary_[idx_] += n; }
+
+void
+char_buffer::decrement_byte_impl(int n)
+{ ary_[idx_] -= n; }
+
+void
+char_buffer::increment_dataptr_impl(int n)
+{
+    auto tmp = idx_ + n;
+    if (tmp > 30000)
+        throw std::overflow_error(
+                "Data pointer is more than 30000;");
+    idx_ = tmp;
+}
+
+void
+char_buffer::decrement_dataptr_impl(int n)
+{
+    auto tmp = idx_ - n;
+    if (tmp < 0)
+        throw std::underflow_error(
+                "Data pointer is less than 0;");
+    idx_ = tmp;
+}
+
+byte_t
+char_buffer::get_byte_impl()
+{ return ary_[idx_]; }
+
 } // namespace pd
