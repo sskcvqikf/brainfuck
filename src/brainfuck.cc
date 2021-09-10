@@ -109,8 +109,6 @@ brainfuck::brainfuck(const char* bf)
 
 void
 brainfuck::execute(std::unique_ptr<buffer> buff)
-{
-    program.execute(buff.get());
-}
+{ program.execute(buff.get()); }
 
 } // namespace pd

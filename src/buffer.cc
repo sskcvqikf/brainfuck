@@ -25,7 +25,7 @@ byte_t
 buffer::get_byte()
 { return get_byte_impl(); }
 
-buffer::~buffer(){}
+buffer::~buffer() {}
 
 vector_buffer::vector_buffer()
     : idx_(0) { vec_.push_back(0); }

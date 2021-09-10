@@ -49,10 +49,8 @@ void
 loop::execute_impl(buffer *buff) const
 {
     while (buff->get_byte() != 0)
-    {
         std::for_each(operations.cbegin(), operations.cend(),
                 [buff](auto& i) { i->execute(buff); });
-    }
 }
 
 void
