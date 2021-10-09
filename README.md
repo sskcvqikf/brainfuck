@@ -9,6 +9,6 @@ A small piece of software that allows you to run brainfuck programs. Developed a
 #### Build:
 Just run `make`.
 #### Run
-Main executable is `brainfuck`. In order to run your program you must pass the actual program as argument to an executable. For example, `./brainfuck "+++++++++++."`.
+Main executable is `main` located in `bin/`. In order to run your program you must pass the actual program as argument to an executable. For example, `./bin/main "+++++++++++."`.
 
 There are a few fancy and tricky programs located in `tests/func` with expected results, you can discover them.

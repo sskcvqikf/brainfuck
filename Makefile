@@ -7,7 +7,7 @@ BUILD_DIR=build/
 TEST_DIR=tests/
 BIN_DIR=bin/
 
-FILES=brainfuck exceptions operation_factory operations
+FILES=brainfuck exceptions operations buffer
 
 SRCS=$(FILES:%=$(SRC_DIR)%.cc)
 OBJS=$(FILES:%=$(BUILD_DIR)%.cc.o)

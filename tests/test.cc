@@ -77,11 +77,14 @@ TEST(overflow_error_test)
     }
     overflow_right_1[30001] = '\0';
 
-    ASSERT_THROW((pd::brainfuck(overflow_right_1).execute()), std::overflow_error);
+    ASSERT_THROW((pd::brainfuck(overflow_right_1).execute(
+        std::make_unique<pd::vector_buffer>())), std::overflow_error);
     char overflow_right_2[] = {"+[>+]"};
-    ASSERT_THROW((pd::brainfuck(overflow_right_2).execute()), std::overflow_error);
+    ASSERT_THROW((pd::brainfuck(overflow_right_2).execute(
+        std::make_unique<pd::vector_buffer>())), std::overflow_error);
     char overflow_left[] = {"<"};
-    ASSERT_THROW((pd::brainfuck(overflow_left).execute()), std::overflow_error);
+    ASSERT_THROW((pd::brainfuck(overflow_left).execute(
+        std::make_unique<pd::vector_buffer>())), std::underflow_error);
 }
 
 int main()

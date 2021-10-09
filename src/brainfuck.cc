@@ -1,102 +1,114 @@
 #include "brainfuck.hh"
 #include "exceptions.hh"
 
+#include <stdexcept>
+#include <stack>
+
 namespace pd
 {
 
 brainfuck::brainfuck(const char* bf)
-    : tree_(std::make_shared<int>(0), data_), last_(&tree_)
 {
-    detail::operation_factory factory(tree_.get_dataptr(),
-            tree_.get_data_ptr());
-    char prev_op = 0;
-    int current_op_count = 1;
-    for(const char *i = bf; *i != '\0'; ++i)
+    using namespace detail;
+    using uniq_op = std::unique_ptr<operation>;
+
+    std::stack<detail::storage_operation*> storages;
+    storages.push(&program);
+
+    auto add_op = [&storages](uniq_op op)
     {
-        char di = *i;
-        if (di == '>' || di == '<' || di == '+' || di == '-')
+        storages.top()->push_operation(std::move(op));
+    };
+
+    auto get_simple_op = [](char c, int n)
+        -> std::unique_ptr<simple_operation>
+    {
+        switch (c)
         {
-            if (di == prev_op)
-                ++current_op_count;
+            case '+':
+                return std::make_unique<increment_byte>(n);
+
+            case '-':
+                return std::make_unique<decrement_byte>(n);
+
+            case '>':
+                return std::make_unique<increment_dataptr>(n);
+
+            case '<':
+                return std::make_unique<decrement_dataptr>(n);
+            
+            default:
+                throw std::runtime_error(
+                        "Something strange is going on");
+        }
+    };
+
+    int curr_op_count = 1;
+    char curr_op = 0;
+
+    for(auto cp = bf; *cp != 0; ++cp)
+    {
+        auto c = *cp;
+        if (c == '+' || c == '-' ||
+            c == '>' || c == '<')
+        {
+            if (c == curr_op)
+                curr_op_count += 1;
             else
             {
-                add(factory, prev_op, current_op_count);
-                prev_op = di;
-                current_op_count = 1;
+                if (curr_op != 0)
+                    add_op(get_simple_op(curr_op, curr_op_count));
+                curr_op = c;
+                curr_op_count = 1;
             }
             continue;
         }
-        switch (di)
+
+        if (c == '\t' || c == '\n' || c == ' ')
+            continue;
+
+        if (c != ']' && c != '[' && c != '.')
+            throw bad_brainfuck_string(
+                    "Unknown symbol appeared");
+
+        if (curr_op != 0)
         {
-            case '.':
-                add(factory, prev_op, current_op_count);
-                prev_op = 0;
-                current_op_count = 1;
-                last_ = last_->add_next(factory.get_output_byte());
-                break;
-
-            case '[':
-                add(factory, prev_op, current_op_count);
-                prev_op = 0;
-                current_op_count = 1;
-                last_ = last_->add_next(factory.get_begin_loop());
-                break;
-
-            case ']':
-                add(factory, prev_op, current_op_count);
-                prev_op = 0;
-                current_op_count = 1;
-                last_ = last_->add_next(factory.get_end_loop());
-                break;
-
-            case '\n':
-                break;
-
-            case '\t':
-                break;
-
-            case ' ':
-                break;
-
-            default:
-                throw bad_brainfuck_string("Unknown symbol appeared");
+            add_op(get_simple_op(curr_op, curr_op_count));
+            curr_op = 0;
+            curr_op_count = 1;
         }
-    }
-    add(factory, prev_op, current_op_count);
-    factory.post_process();
-}
 
-void
-brainfuck::add(const detail::operation_factory &factory, char to_add,
-        int n)
-{
-    switch (to_add)
-    {
-        case '>':
-            last_ = last_->add_next(factory.get_icrement_dataptr(n));
-            break;
-
-        case '<':
-            last_ = last_->add_next(factory.get_decrement_dataptr(n));
-            break;
-
-        case '+':
-            last_ = last_->add_next(factory.get_icrement_byte(n));
-            break;
-
-        case '-':
-            last_ = last_->add_next(factory.get_decrement_byte(n));
-            break;
+        if (c == ']')
+        {
+            if (storages.size() == 1)
+                throw bad_brainfuck_string(
+                        "Unmatched brackets appeared");
+            storages.pop();
+            continue;
+        }
         
-        case 0:
-            break;
+        if (c == '[')
+        {
+            auto new_loop = std::make_unique<loop>();
+            auto new_loop_ptr = new_loop.get();
+            add_op(std::move(new_loop));
+            storages.push(new_loop_ptr);
+            continue;
+        }
+
+        if (c == '.')
+            add_op(std::make_unique<output_byte>());
     }
+    if (curr_op != 0)
+        add_op(get_simple_op(curr_op, curr_op_count));
+
+    if (storages.size() != 1)
+        throw bad_brainfuck_string(
+                "Unmatched brackets appeared");
 }
 
 void
-brainfuck::execute()
-{
-    tree_.execute();
-}
+brainfuck::execute(std::unique_ptr<buffer> buff)
+{ program.execute(buff.get()); }
 
 } // namespace pd
